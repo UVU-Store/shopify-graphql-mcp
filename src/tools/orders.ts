@@ -1,0 +1,214 @@
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+import { ShopifyGraphQLClient } from "../utils/graphql-client.js";
+import { Order } from "../types/index.js";
+
+export function registerOrderTools(server: McpServer, client: ShopifyGraphQLClient) {
+  // Get Orders
+  server.registerTool(
+    "get_orders",
+    {
+      description: "Fetch orders from the Shopify store with optional filtering",
+      inputSchema: {
+        first: z.number().min(1).max(250).optional().describe("Number of orders to fetch (1-250, default: 50)"),
+        after: z.string().optional().describe("Cursor for pagination"),
+        query: z.string().optional().describe("Filter query (e.g., 'status:open', 'created_at:>2024-01-01')"),
+        sortKey: z.enum(["CREATED_AT", "UPDATED_AT", "PROCESSED_AT", "TOTAL_PRICE", "ID"]).optional().describe("Field to sort by"),
+        reverse: z.boolean().optional().describe("Reverse the sort order"),
+      },
+    },
+    async ({ first = 50, after, query, sortKey = "CREATED_AT", reverse = true }) => {
+      const graphqlQuery = `
+        query GetOrders($first: Int!, $after: String, $query: String, $sortKey: OrderSortKeys, $reverse: Boolean) {
+          orders(first: $first, after: $after, query: $query, sortKey: $sortKey, reverse: $reverse) {
+            edges {
+              node {
+                id
+                name
+                createdAt
+                updatedAt
+                displayFinancialStatus
+                displayFulfillmentStatus
+                totalPriceSet {
+                  shopMoney {
+                    amount
+                    currencyCode
+                  }
+                }
+                subtotalPriceSet {
+                  shopMoney {
+                    amount
+                    currencyCode
+                  }
+                }
+                customer {
+                  id
+                  firstName
+                  lastName
+                  email
+                }
+                lineItems(first: 10) {
+                  edges {
+                    node {
+                      id
+                      title
+                      quantity
+                      originalUnitPriceSet {
+                        shopMoney {
+                          amount
+                          currencyCode
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              cursor
+            }
+            pageInfo {
+              hasNextPage
+              hasPreviousPage
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute<{ orders: { edges: Array<{ node: Order; cursor: string }>; pageInfo: { hasNextPage: boolean; hasPreviousPage: boolean } } }>(graphqlQuery, { first, after, query, sortKey, reverse });
+        
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Get Single Order
+  server.registerTool(
+    "get_order",
+    {
+      description: "Fetch a specific order by ID",
+      inputSchema: {
+        id: z.string().describe("Order ID (e.g., 'gid://shopify/Order/123456789')"),
+      },
+    },
+    async ({ id }) => {
+      const graphqlQuery = `
+        query GetOrder($id: ID!) {
+          order(id: $id) {
+            id
+            name
+            createdAt
+            updatedAt
+            displayFinancialStatus
+            displayFulfillmentStatus
+            email
+            phone
+            totalPriceSet {
+              shopMoney {
+                amount
+                currencyCode
+              }
+            }
+            subtotalPriceSet {
+              shopMoney {
+                amount
+                currencyCode
+              }
+            }
+            totalShippingPriceSet {
+              shopMoney {
+                amount
+                currencyCode
+              }
+            }
+            totalTaxSet {
+              shopMoney {
+                amount
+                currencyCode
+              }
+            }
+            customer {
+              id
+              firstName
+              lastName
+              email
+              phone
+            }
+            lineItems(first: 50) {
+              edges {
+                node {
+                  id
+                  title
+                  quantity
+                  originalUnitPriceSet {
+                    shopMoney {
+                      amount
+                      currencyCode
+                    }
+                  }
+                  variant {
+                    id
+                    title
+                    sku
+                    product {
+                      id
+                      title
+                    }
+                  }
+                }
+              }
+            }
+            shippingAddress {
+              address1
+              address2
+              city
+              province
+              country
+              zip
+              phone
+            }
+            billingAddress {
+              address1
+              address2
+              city
+              province
+              country
+              zip
+              phone
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute<{ order: Order }>(graphqlQuery, { id });
+        
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+}

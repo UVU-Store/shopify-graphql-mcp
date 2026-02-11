@@ -1,0 +1,26 @@
+{
+  "name": "shopify-graphql-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Shopify GraphQL API with cURL integration",
+  "type": "module",
+  "bin": {
+    "shopify-graphql-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc && chmod 755 dist/index.js",
+    "build:watch": "tsc --watch",
+    "dev": "tsc && node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["mcp", "shopify", "graphql", "api"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
