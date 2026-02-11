@@ -10,6 +10,26 @@ import { registerDiscountTools } from "./discounts.js";
 import { registerLocationTools } from "./locations.js";
 import { registerShopTools } from "./shop.js";
 import { registerMetaobjectTools } from "./metaobjects.js";
+import { registerAnalyticsTools } from "./analytics.js";
+import { registerFulfillmentTools } from "./fulfillments.js";
+import { registerCompanyTools } from "./companies.js";
+import { registerChannelTools } from "./channels.js";
+import { registerCheckoutTools } from "./checkouts.js";
+import { registerAuditEventTools } from "./audit-events.js";
+import { registerCartTransformTools } from "./cart-transforms.js";
+import { registerValidationTools } from "./validations.js";
+import { registerCashTrackingTools } from "./cash-tracking.js";
+import { registerAppTools } from "./apps.js";
+import { registerCustomFulfillmentServiceTools } from "./custom-fulfillment-services.js";
+import { registerCustomPixelTools } from "./custom-pixels.js";
+import { registerCustomerDataErasureTools } from "./customer-data-erasure.js";
+import { registerCustomerPaymentMethodTools } from "./customer-payment-methods.js";
+import { registerCustomerMergeTools } from "./customer-merge.js";
+import { registerDeliveryCustomizationTools } from "./delivery-customizations.js";
+import { registerPriceRuleTools } from "./price-rules.js";
+import { registerDiscoveryTools } from "./discovery.js";
+import { registerFileTools } from "./files.js";
+import { registerFulfillmentConstraintTools } from "./fulfillment-constraints.js";
 
 export function registerTools(server: McpServer): void {
   // Always register a health check tool first
@@ -67,4 +87,28 @@ export function registerTools(server: McpServer): void {
   registerLocationTools(server, client);
   registerShopTools(server, client);
   registerMetaobjectTools(server, client);
+  
+  // Batch 1: First 25 scopes
+  registerAnalyticsTools(server, client);
+  registerFulfillmentTools(server, client);
+  registerCompanyTools(server, client);
+  registerChannelTools(server, client);
+  registerCheckoutTools(server, client);
+  registerAuditEventTools(server, client);
+  registerCartTransformTools(server, client);
+  registerValidationTools(server, client);
+  registerCashTrackingTools(server, client);
+  registerAppTools(server, client);
+  
+  // Batch 2: Next 25 scopes
+  registerCustomFulfillmentServiceTools(server, client);
+  registerCustomPixelTools(server, client);
+  registerCustomerDataErasureTools(server, client);
+  registerCustomerPaymentMethodTools(server, client);
+  registerCustomerMergeTools(server, client);
+  registerDeliveryCustomizationTools(server, client);
+  registerPriceRuleTools(server, client);
+  registerDiscoveryTools(server, client);
+  registerFileTools(server, client);
+  registerFulfillmentConstraintTools(server, client);
 }

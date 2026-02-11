@@ -232,4 +232,129 @@ export function registerDiscountTools(server: McpServer, client: ShopifyGraphQLC
       }
     }
   );
+
+  // Get Discounts Allocator Functions
+  server.registerTool(
+    "get_discounts_allocator_functions",
+    {
+      description: "Fetch discounts allocator functions for the store",
+      inputSchema: {
+        first: z.number().min(1).max(250).optional().describe("Number of functions to fetch (1-250, default: 50)"),
+        after: z.string().optional().describe("Cursor for pagination"),
+      },
+    },
+    async ({ first = 50, after }) => {
+      const query = `
+        query GetDiscountsAllocatorFunctions($first: Int!, $after: String) {
+          discountsAllocators(first: $first, after: $after) {
+            edges {
+              node {
+                id
+                functionId
+                metafields(first: 10) {
+                  edges {
+                    node {
+                      id
+                      namespace
+                      key
+                      value
+                    }
+                  }
+                }
+              }
+              cursor
+            }
+            pageInfo {
+              hasNextPage
+              hasPreviousPage
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(query, { first, after });
+        
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Create Discounts Allocator Function
+  server.registerTool(
+    "create_discounts_allocator_function",
+    {
+      description: "Create a discounts allocator function using a Shopify Function",
+      inputSchema: {
+        functionId: z.string().describe("ID of the discounts allocator function to use"),
+        metafields: z.array(z.object({
+          namespace: z.string().describe("Metafield namespace"),
+          key: z.string().describe("Metafield key"),
+          value: z.string().describe("Metafield value"),
+          type: z.string().describe("Metafield type"),
+        })).optional().describe("Configuration metafields for the function"),
+      },
+    },
+    async ({ functionId, metafields }) => {
+      const mutation = `
+        mutation DiscountsAllocatorCreate($input: DiscountsAllocatorInput!) {
+          discountsAllocatorCreate(input: $input) {
+            discountsAllocator {
+              id
+              functionId
+              metafields(first: 10) {
+                edges {
+                  node {
+                    id
+                    namespace
+                    key
+                    value
+                  }
+                }
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      const input: Record<string, unknown> = { functionId };
+      if (metafields && metafields.length > 0) {
+        input.metafields = metafields;
+      }
+
+      try {
+        const result = await client.execute(mutation, { input });
+        
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
 }
