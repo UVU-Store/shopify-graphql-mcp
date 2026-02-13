@@ -6,7 +6,8 @@
       "env": {
         "SHOPIFY_ACCESS_TOKEN": "shpat_xxxxx",
         "SHOPIFY_STORE_URL": "your-store.myshopify.com",
-        "SHOPIFY_STORE_API_URL": "https://your-store.myshopify.com/admin/api/2025-01/graphql.json"
+        "SHOPIFY_STORE_API_URL": "https://your-store.myshopify.com/admin/api/2025-01/graphql.json",
+        "ENABLED_TOOL_CATEGORIES": "essential"
       }
     }
   }

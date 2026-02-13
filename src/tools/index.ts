@@ -1,5 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ShopifyGraphQLClient } from "../utils/graphql-client.js";
+import { getEnabledCategories, getEnabledToolCount, getCategoryConfig } from "../config/tool-categories.js";
+
+// Import all tool registration functions
 import { registerOrderTools } from "./orders.js";
 import { registerProductTools } from "./products.js";
 import { registerCustomerTools } from "./customers.js";
@@ -43,9 +46,101 @@ import { registerPageTools } from "./pages.js";
 import { registerOrderEditTools } from "./order-edits.js";
 import { registerPackingSlipTemplateTools } from "./packing-slip-templates.js";
 import { registerPaymentTermsTools } from "./payment-terms.js";
+import { registerReturnsTools } from "./returns.js";
+import { registerScriptTagTools } from "./script-tags.js";
+import { registerThemeTools } from "./themes.js";
+import { registerTranslationTools } from "./translations.js";
+import { registerPublicationTools } from "./publications.js";
+import { registerPixelTools } from "./pixels.js";
+import { registerPrivacySettingsTools } from "./privacy-settings.js";
+import { registerShippingTools } from "./shipping.js";
+import { registerReportTools } from "./reports.js";
+import { registerResourceFeedbackTools } from "./resource-feedbacks.js";
+import { registerProductListingTools } from "./product-listings.js";
+
+// Map of module names to their registration functions
+const TOOL_REGISTRARS: Record<string, (server: McpServer, client: ShopifyGraphQLClient) => void> = {
+  'shop': registerShopTools,
+  'products': registerProductTools,
+  'orders': registerOrderTools,
+  'customers': registerCustomerTools,
+  'collections': registerCollectionTools,
+  'inventory': registerInventoryTools,
+  'locations': registerLocationTools,
+  'draft-orders': registerDraftOrderTools,
+  'discounts': registerDiscountTools,
+  'fulfillments': registerFulfillmentTools,
+  'gift-cards': registerGiftCardTools,
+  'returns': registerReturnsTools,
+  'checkouts': registerCheckoutTools,
+  'payment-terms': registerPaymentTermsTools,
+  'order-edits': registerOrderEditTools,
+  'companies': registerCompanyTools,
+  'cash-tracking': registerCashTrackingTools,
+  'fulfillment-constraints': registerFulfillmentConstraintTools,
+  'delivery-customizations': registerDeliveryCustomizationTools,
+  'delivery-option-generators': registerDeliveryOptionGeneratorTools,
+  'custom-fulfillment-services': registerCustomFulfillmentServiceTools,
+  'marketing-campaigns': registerMarketingCampaignTools,
+  'markets': registerMarketTools,
+  'channels': registerChannelTools,
+  'discovery': registerDiscoveryTools,
+  'price-rules': registerPriceRuleTools,
+  'analytics': registerAnalyticsTools,
+  'pixels': registerPixelTools,
+  'publications': registerPublicationTools,
+  'pages': registerPageTools,
+  'navigation': registerNavigationTools,
+  'themes': registerThemeTools,
+  'files': registerFileTools,
+  'metaobjects': registerMetaobjectTools,
+  'translations': registerTranslationTools,
+  'locales': registerLocaleTools,
+  'legal-policies': registerLegalPolicyTools,
+  'cart-transforms': registerCartTransformTools,
+  'validations': registerValidationTools,
+  'audit-events': registerAuditEventTools,
+  'custom-pixels': registerCustomPixelTools,
+  'script-tags': registerScriptTagTools,
+  'customer-data-erasure': registerCustomerDataErasureTools,
+  'customer-merge': registerCustomerMergeTools,
+  'customer-payment-methods': registerCustomerPaymentMethodTools,
+  'privacy-settings': registerPrivacySettingsTools,
+  'shipping': registerShippingTools,
+  'product-listings': registerProductListingTools,
+  'reports': registerReportTools,
+  'resource-feedbacks': registerResourceFeedbackTools,
+  'apps': registerAppTools,
+  'inventory-shipments': registerInventoryShipmentTools,
+  'inventory-transfers': registerInventoryTransferTools,
+  'packing-slip-templates': registerPackingSlipTemplateTools,
+};
 
 export function registerTools(server: McpServer): void {
-  // Always register a health check tool first
+  // Get enabled categories from environment
+  const enabledCategories = getEnabledCategories();
+  const enabledModules = new Set<string>();
+  
+  // Build set of enabled modules
+  for (const category of enabledCategories) {
+    const config = getCategoryConfig(category);
+    if (config) {
+      config.modules.forEach(module => enabledModules.add(module));
+    }
+  }
+
+  // Log configuration
+  console.error(`[INFO] Enabled tool categories: ${enabledCategories.length > 0 ? enabledCategories.join(', ') : 'none'}`);
+  console.error(`[INFO] Estimated tool count: ${getEnabledToolCount(enabledCategories)}`);
+  
+  if (enabledCategories.length > 0) {
+    const envValue = process.env.ENABLED_TOOL_CATEGORIES;
+    if (!envValue) {
+      console.error(`[INFO] Set ENABLED_TOOL_CATEGORIES=essential for ~35 tools, or =all for all tools`);
+    }
+  }
+
+  // Always register health check
   server.registerTool(
     "health_check",
     {
@@ -68,6 +163,7 @@ export function registerTools(server: McpServer): void {
                 message: configured
                   ? "Server is running and configured"
                   : "Server is running but missing required environment variables: SHOPIFY_ACCESS_TOKEN, SHOPIFY_STORE_URL, SHOPIFY_STORE_API_URL",
+                enabledCategories,
                 timestamp: new Date().toISOString(),
               },
               null,
@@ -79,6 +175,12 @@ export function registerTools(server: McpServer): void {
     }
   );
 
+  // Skip tool registration if no categories enabled
+  if (enabledCategories.length === 0) {
+    console.error("[WARN] No tool categories enabled. Only health_check available.");
+    return;
+  }
+
   let client: ShopifyGraphQLClient;
 
   try {
@@ -89,56 +191,22 @@ export function registerTools(server: McpServer): void {
     return;
   }
 
-  // Register all tool categories
-  registerOrderTools(server, client);
-  registerProductTools(server, client);
-  registerCustomerTools(server, client);
-  registerCollectionTools(server, client);
-  registerInventoryTools(server, client);
-  registerDraftOrderTools(server, client);
-  registerDiscountTools(server, client);
-  registerLocationTools(server, client);
-  registerShopTools(server, client);
-  registerMetaobjectTools(server, client);
+  // Register enabled tools
+  let registeredCount = 0;
   
-  // Batch 1: First 25 scopes
-  registerAnalyticsTools(server, client);
-  registerFulfillmentTools(server, client);
-  registerCompanyTools(server, client);
-  registerChannelTools(server, client);
-  registerCheckoutTools(server, client);
-  registerAuditEventTools(server, client);
-  registerCartTransformTools(server, client);
-  registerValidationTools(server, client);
-  registerCashTrackingTools(server, client);
-  registerAppTools(server, client);
-  
-  // Batch 2: Next 25 scopes
-  registerCustomFulfillmentServiceTools(server, client);
-  registerCustomPixelTools(server, client);
-  registerCustomerDataErasureTools(server, client);
-  registerCustomerPaymentMethodTools(server, client);
-  registerCustomerMergeTools(server, client);
-  registerDeliveryCustomizationTools(server, client);
-  registerPriceRuleTools(server, client);
-  registerDiscoveryTools(server, client);
-  registerFileTools(server, client);
-  registerFulfillmentConstraintTools(server, client);
-  
-  // Batch 3: Additional scopes
-  registerGiftCardTools(server, client);
-  registerInventoryShipmentTools(server, client);
-  registerInventoryTransferTools(server, client);
-  registerLegalPolicyTools(server, client);
-  registerDeliveryOptionGeneratorTools(server, client);
-  registerLocaleTools(server, client);
-  registerMarketingCampaignTools(server, client);
-  
-  // Batch 4: Markets, Navigation, Pages, Order Edits, Payment Terms
-  registerMarketTools(server, client);
-  registerNavigationTools(server, client);
-  registerPageTools(server, client);
-  registerOrderEditTools(server, client);
-  registerPackingSlipTemplateTools(server, client);
-  registerPaymentTermsTools(server, client);
+  for (const moduleName of enabledModules) {
+    const registrar = TOOL_REGISTRARS[moduleName];
+    if (registrar) {
+      try {
+        registrar(server, client);
+        registeredCount++;
+      } catch (error) {
+        console.error(`[ERROR] Failed to register tools for module '${moduleName}':`, error instanceof Error ? error.message : String(error));
+      }
+    } else {
+      console.error(`[WARN] No registrar found for module: ${moduleName}`);
+    }
+  }
+
+  console.error(`[INFO] Successfully registered ${registeredCount} tool modules`);
 }
