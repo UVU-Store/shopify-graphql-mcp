@@ -6,13 +6,13 @@ The Shopify GraphQL MCP supports organizing tools into categories for easy manag
 
 | Category | Description | ~Tool Count | Modules | Status |
 |----------|-------------|-------------|---------|--------|
-| `essential` | Core e-commerce operations | ~35 | shop, products, orders, customers, inventory, collections, locations, draft-orders, discounts, fulfillments | ✅ |
-| `commerce` | Extended commerce features | ~55 | gift-cards, returns, checkouts, payment-terms, payment-customizations, shopify-payments, order-edits, companies, cash-tracking, store-credit, subscriptions, fulfillment-constraints, delivery-customizations, delivery-option-generators, custom-fulfillment-services | ✅ |
-| `marketing` | Marketing and promotional tools | ~20 | marketing-campaigns, markets, channels, discovery, price-rules, analytics, pixels, publications | |
-| `content` | Store content and theming | ~25 | pages, navigation, themes, files, metaobjects, translations, locales, legal-policies | |
-| `advanced` | Complex/technical features | ~20 | cart-transforms, validations, audit-events, custom-pixels, script-tags, customer-data-erasure, customer-merge, customer-payment-methods, privacy-settings, shipping, product-listings | |
-| `reporting` | Reports and feedback | ~15 | reports, resource-feedbacks, apps | |
-| `automation` | Inventory automation | ~15 | inventory-shipments, inventory-transfers, packing-slip-templates | |
+| `essential` | Core e-commerce operations | 42 | shop, products, orders, customers, inventory, collections, locations, draft-orders, discounts, fulfillments | ✅ |
+| `commerce` | Extended commerce features | 79 | gift-cards, returns, checkouts, payment-terms, payment-customizations, shopify-payments, order-edits, companies, cash-tracking, store-credit, subscriptions, fulfillment-constraints, delivery-customizations, delivery-option-generators, custom-fulfillment-services | ✅ |
+| `marketing` | Marketing and promotional tools | 30 | marketing-campaigns, markets, channels, discovery, price-rules, analytics, pixels, publications | |
+| `content` | Store content and theming | 35 | pages, navigation, themes, files, metaobjects, translations, locales, legal-policies | |
+| `advanced` | Complex/technical features | 31 | cart-transforms, validations, audit-events, custom-pixels, script-tags, customer-data-erasure, customer-merge, customer-payment-methods, privacy-settings, shipping, product-listings | |
+| `reporting` | Reports and feedback | 15 | reports, resource-feedbacks, apps | |
+| `automation` | Inventory automation | 14 | inventory-shipments, inventory-transfers, packing-slip-templates | |
 
 ### Status Legend
 
@@ -23,7 +23,7 @@ The Shopify GraphQL MCP supports organizing tools into categories for easy manag
 
 ## Available Tools
 
-### 🏪 Essential Category (~35 tools)
+### 🏪 Essential Category (42 tools)
 
 Core e-commerce operations for day-to-day store management.
 
@@ -91,7 +91,7 @@ Core e-commerce operations for day-to-day store management.
 
 ---
 
-### 🛒 Commerce Category (~55 tools)
+### 🛒 Commerce Category (79 tools)
 
 Extended commerce features for advanced store operations, including payment processing, subscriptions, and store credit.
 
@@ -206,7 +206,7 @@ Extended commerce features for advanced store operations, including payment proc
 
 ---
 
-### 📢 Marketing Category (~20 tools)
+### 📢 Marketing Category (30 tools)
 
 Marketing, promotional, and sales channel tools.
 
@@ -258,7 +258,7 @@ Marketing, promotional, and sales channel tools.
 
 ---
 
-### 📝 Content Category (~25 tools)
+### 📝 Content Category (35 tools)
 
 Store content, theming, and media management.
 
@@ -315,7 +315,7 @@ Store content, theming, and media management.
 
 ---
 
-### ⚙️ Advanced Category (~20 tools)
+### ⚙️ Advanced Category (31 tools)
 
 Complex and technical features for power users.
 
@@ -370,7 +370,7 @@ Complex and technical features for power users.
 
 ---
 
-### 📊 Reporting Category (~15 tools)
+### 📊 Reporting Category (15 tools)
 
 Reports, feedback, and app management.
 
@@ -396,7 +396,7 @@ Reports, feedback, and app management.
 
 ---
 
-### 🔄 Automation Category (~15 tools)
+### 🔄 Automation Category (14 tools)
 
 Inventory automation and advanced fulfillment workflows.
 
@@ -422,7 +422,7 @@ Inventory automation and advanced fulfillment workflows.
 
 ---
 
-**Total**: 180+ comprehensive tools across 7 categories
+**Total**: 246 comprehensive tools across 7 categories
 
 ---
 
@@ -448,7 +448,7 @@ Each category can be enabled/disabled with individual boolean flags:
 
 #### Quick Presets
 
-**Essential Only (~35 tools)**
+**Essential Only (42 tools)**
 ```json
 {
   "env": {
@@ -463,7 +463,7 @@ Each category can be enabled/disabled with individual boolean flags:
 }
 ```
 
-**Essential + Commerce (~90 tools)**
+**Essential + Commerce (121 tools)**
 ```json
 {
   "env": {
@@ -511,4 +511,4 @@ Different IDEs have different limits on MCP tool counts:
 - **Zed**: ~50-75 tools recommended
 - **Other editors**: Check your editor's documentation
 
-Start with `essential` (~35 tools) and add categories as needed.
+Start with `essential` (42 tools) and add categories as needed.
