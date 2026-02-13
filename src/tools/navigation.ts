@@ -3,43 +3,39 @@ import { z } from "zod";
 import { ShopifyGraphQLClient } from "../utils/graphql-client.js";
 
 export function registerNavigationTools(server: McpServer, client: ShopifyGraphQLClient) {
-  // Get Navigations (Menus)
+  // Get Menus
   server.registerTool(
-    "get_navigations",
+    "get_menus",
     {
       description: "Fetch navigation menus for the online store",
       inputSchema: {
-        first: z.number().min(1).max(250).optional().describe("Number of navigations to fetch (1-250, default: 50)"),
+        first: z.number().min(1).max(250).optional().describe("Number of menus to fetch (1-250, default: 50)"),
         after: z.string().optional().describe("Cursor for pagination"),
       },
     },
     async ({ first = 50, after }) => {
       const query = `
-        query GetNavigations($first: Int!, $after: String) {
-          navigations(first: $first, after: $after) {
+        query GetMenus($first: Int!, $after: String) {
+          menus(first: $first, after: $after) {
             edges {
               node {
                 id
                 title
                 handle
-                items(first: 100) {
-                  edges {
-                    node {
-                      id
-                      title
-                      url
-                      type
-                      items(first: 50) {
-                        edges {
-                          node {
-                            id
-                            title
-                            url
-                            type
-                          }
-                        }
-                      }
-                    }
+                isDefault
+                items(limit: 100) {
+                  id
+                  title
+                  url
+                  type
+                  resourceId
+                  tags
+                  items {
+                    id
+                    title
+                    url
+                    type
+                    resourceId
                   }
                 }
               }
@@ -73,49 +69,42 @@ export function registerNavigationTools(server: McpServer, client: ShopifyGraphQ
     }
   );
 
-  // Get Navigation
+  // Get Menu
   server.registerTool(
-    "get_navigation",
+    "get_menu",
     {
-      description: "Fetch a specific navigation menu by handle",
+      description: "Fetch a specific menu by ID",
       inputSchema: {
-        handle: z.string().describe("Navigation handle (e.g., 'main-menu', 'footer')"),
+        id: z.string().describe("Menu ID (e.g., 'gid://shopify/Menu/123456789')"),
       },
     },
-    async ({ handle }) => {
+    async ({ id }) => {
       const query = `
-        query GetNavigation($handle: String!) {
-          navigation(handle: $handle) {
+        query GetMenu($id: ID!) {
+          menu(id: $id) {
             id
             title
             handle
-            items(first: 200) {
-              edges {
-                node {
+            isDefault
+            items(limit: 200) {
+              id
+              title
+              url
+              type
+              resourceId
+              tags
+              items {
+                id
+                title
+                url
+                type
+                resourceId
+                items {
                   id
                   title
                   url
                   type
-                  items(first: 100) {
-                    edges {
-                      node {
-                        id
-                        title
-                        url
-                        type
-                        items(first: 50) {
-                          edges {
-                            node {
-                              id
-                              title
-                              url
-                              type
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
+                  resourceId
                 }
               }
             }
@@ -124,7 +113,7 @@ export function registerNavigationTools(server: McpServer, client: ShopifyGraphQ
       `;
 
       try {
-        const result = await client.execute(query, { handle });
+        const result = await client.execute(query, { id });
         
         if (result.errors) {
           return {
@@ -143,37 +132,34 @@ export function registerNavigationTools(server: McpServer, client: ShopifyGraphQ
     }
   );
 
-  // Create Navigation
+  // Create Menu
   server.registerTool(
-    "create_navigation",
+    "create_menu",
     {
       description: "Create a new navigation menu",
       inputSchema: {
-        title: z.string().describe("Navigation title"),
+        title: z.string().describe("Menu title"),
         handle: z.string().describe("Unique handle (e.g., 'main-menu')"),
         items: z.array(z.object({
           title: z.string().describe("Item title"),
-          url: z.string().describe("Item URL"),
-          type: z.string().optional().describe("Item type (e.g., 'link', 'product', 'collection')"),
-        })).optional().describe("Navigation items"),
+          url: z.string().optional().describe("Item URL"),
+          type: z.string().optional().describe("Item type (e.g., 'PAGE', 'PRODUCT', 'COLLECTION', 'BLOG', 'HTTP')"),
+        })).optional().describe("Menu items"),
       },
     },
     async ({ title, handle, items }) => {
       const mutation = `
-        mutation NavigationCreate($input: NavigationInput!) {
-          navigationCreate(input: $input) {
-            navigation {
+        mutation MenuCreate($title: String!, $handle: String!, $items: [MenuItemCreateInput!]) {
+          menuCreate(title: $title, handle: $handle, items: $items) {
+            menu {
               id
               title
               handle
-              items(first: 100) {
-                edges {
-                  node {
-                    id
-                    title
-                    url
-                  }
-                }
+              isDefault
+              items(limit: 100) {
+                id
+                title
+                url
               }
             }
             userErrors {
@@ -184,13 +170,8 @@ export function registerNavigationTools(server: McpServer, client: ShopifyGraphQ
         }
       `;
 
-      const input: Record<string, unknown> = { title, handle };
-      if (items && items.length > 0) {
-        input.items = items;
-      }
-
       try {
-        const result = await client.execute(mutation, { input });
+        const result = await client.execute(mutation, { title, handle, items });
         
         if (result.errors) {
           return {
@@ -209,37 +190,34 @@ export function registerNavigationTools(server: McpServer, client: ShopifyGraphQ
     }
   );
 
-  // Update Navigation
+  // Update Menu
   server.registerTool(
-    "update_navigation",
+    "update_menu",
     {
       description: "Update an existing navigation menu",
       inputSchema: {
-        id: z.string().describe("Navigation ID"),
-        title: z.string().optional().describe("Navigation title"),
+        id: z.string().describe("Menu ID"),
+        title: z.string().describe("Menu title"),
         items: z.array(z.object({
+          id: z.string().optional().describe("Item ID (for updates)"),
           title: z.string().describe("Item title"),
-          url: z.string().describe("Item URL"),
+          url: z.string().optional().describe("Item URL"),
           type: z.string().optional().describe("Item type"),
-        })).optional().describe("Navigation items"),
+        })).optional().describe("Menu items"),
       },
     },
     async ({ id, title, items }) => {
       const mutation = `
-        mutation NavigationUpdate($id: ID!, $input: NavigationInput!) {
-          navigationUpdate(id: $id, input: $input) {
-            navigation {
+        mutation MenuUpdate($id: ID!, $title: String!, $items: [MenuItemUpdateInput!]) {
+          menuUpdate(id: $id, title: $title, items: $items) {
+            menu {
               id
               title
               handle
-              items(first: 100) {
-                edges {
-                  node {
-                    id
-                    title
-                    url
-                  }
-                }
+              items(limit: 100) {
+                id
+                title
+                url
               }
             }
             userErrors {
@@ -250,12 +228,8 @@ export function registerNavigationTools(server: McpServer, client: ShopifyGraphQ
         }
       `;
 
-      const input: Record<string, unknown> = {};
-      if (title) input.title = title;
-      if (items && items.length > 0) input.items = items;
-
       try {
-        const result = await client.execute(mutation, { id, input });
+        const result = await client.execute(mutation, { id, title, items });
         
         if (result.errors) {
           return {
@@ -274,20 +248,20 @@ export function registerNavigationTools(server: McpServer, client: ShopifyGraphQ
     }
   );
 
-  // Delete Navigation
+  // Delete Menu
   server.registerTool(
-    "delete_navigation",
+    "delete_menu",
     {
       description: "Delete a navigation menu",
       inputSchema: {
-        id: z.string().describe("Navigation ID to delete"),
+        id: z.string().describe("Menu ID to delete"),
       },
     },
     async ({ id }) => {
       const mutation = `
-        mutation NavigationDelete($id: ID!) {
-          navigationDelete(id: $id) {
-            deletedNavigationId
+        mutation MenuDelete($id: ID!) {
+          menuDelete(id: $id) {
+            deletedMenuId
             userErrors {
               field
               message

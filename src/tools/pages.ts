@@ -12,11 +12,11 @@ export function registerPageTools(server: McpServer, client: ShopifyGraphQLClien
         first: z.number().min(1).max(250).optional().describe("Number of pages to fetch (1-250, default: 50)"),
         after: z.string().optional().describe("Cursor for pagination"),
         query: z.string().optional().describe("Filter query"),
-        sortKey: z.enum(["TITLE", "CREATED_AT", "UPDATED_AT", "ID"]).optional().describe("Field to sort by"),
+        sortKey: z.enum(["TITLE", "UPDATED_AT", "ID", "PUBLISHED_AT"]).optional().describe("Field to sort by"),
         reverse: z.boolean().optional().describe("Reverse the sort order"),
       },
     },
-    async ({ first = 50, after, query, sortKey = "CREATED_AT", reverse = true }) => {
+    async ({ first = 50, after, query, sortKey = "UPDATED_AT", reverse = true }) => {
       const graphqlQuery = `
         query GetPages($first: Int!, $after: String, $query: String, $sortKey: PageSortKeys, $reverse: Boolean) {
           pages(first: $first, after: $after, query: $query, sortKey: $sortKey, reverse: $reverse) {
@@ -25,16 +25,13 @@ export function registerPageTools(server: McpServer, client: ShopifyGraphQLClien
                 id
                 title
                 handle
-                url
                 body
                 bodySummary
                 createdAt
                 updatedAt
                 publishedAt
-                shop {
-                  id
-                  name
-                }
+                isPublished
+                templateSuffix
               }
               cursor
             }
@@ -82,20 +79,13 @@ export function registerPageTools(server: McpServer, client: ShopifyGraphQLClien
             id
             title
             handle
-            url
             body
             bodySummary
             createdAt
             updatedAt
             publishedAt
-            shop {
-              id
-              name
-            }
-            seo {
-              title
-              description
-            }
+            isPublished
+            templateSuffix
           }
         }
       `;
@@ -134,16 +124,16 @@ export function registerPageTools(server: McpServer, client: ShopifyGraphQLClien
     },
     async ({ title, body, handle, published = false }) => {
       const mutation = `
-        mutation PageCreate($input: PageInput!) {
+        mutation PageCreate($input: PageCreateInput!) {
           pageCreate(input: $input) {
             page {
               id
               title
               handle
-              url
               body
               publishedAt
               createdAt
+              isPublished
             }
             userErrors {
               field
@@ -155,7 +145,7 @@ export function registerPageTools(server: McpServer, client: ShopifyGraphQLClien
 
       const input: Record<string, unknown> = { title, body };
       if (handle) input.handle = handle;
-      if (published) input.publishedAt = new Date().toISOString();
+      if (published) input.isPublished = true;
 
       try {
         const result = await client.execute(mutation, { input });
@@ -192,16 +182,16 @@ export function registerPageTools(server: McpServer, client: ShopifyGraphQLClien
     },
     async ({ id, title, body, handle, published }) => {
       const mutation = `
-        mutation PageUpdate($id: ID!, $input: PageInput!) {
+        mutation PageUpdate($id: ID!, $input: PageUpdateInput!) {
           pageUpdate(id: $id, input: $input) {
             page {
               id
               title
               handle
-              url
               body
               publishedAt
               updatedAt
+              isPublished
             }
             userErrors {
               field
@@ -216,7 +206,7 @@ export function registerPageTools(server: McpServer, client: ShopifyGraphQLClien
       if (body) input.body = body;
       if (handle) input.handle = handle;
       if (published !== undefined) {
-        input.publishedAt = published ? new Date().toISOString() : null;
+        input.isPublished = published;
       }
 
       try {
