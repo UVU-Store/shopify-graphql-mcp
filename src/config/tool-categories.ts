@@ -50,20 +50,24 @@ export const ESSENTIAL_CATEGORIES: CategoryConfig = {
 };
 
 /**
- * Commerce tools - extended commerce features (~25 tools)
+ * Commerce tools - extended commerce features (~55 tools)
  */
 export const COMMERCE_CATEGORIES: CategoryConfig = {
   name: 'commerce',
-  description: 'Extended commerce: gift cards, returns, checkouts, payments',
-  toolCount: 25,
+  description: 'Extended commerce: gift cards, returns, checkouts, payments, store credit, subscriptions',
+  toolCount: 55,
   modules: [
     'gift-cards',
     'returns',
     'checkouts',
     'payment-terms',
+    'payment-customizations',
+    'shopify-payments',
     'order-edits',
     'companies',
     'cash-tracking',
+    'store-credit',
+    'subscriptions',
     'fulfillment-constraints',
     'delivery-customizations',
     'delivery-option-generators',

@@ -46,7 +46,11 @@ import { registerPageTools } from "./pages.js";
 import { registerOrderEditTools } from "./order-edits.js";
 import { registerPackingSlipTemplateTools } from "./packing-slip-templates.js";
 import { registerPaymentTermsTools } from "./payment-terms.js";
+import { registerPaymentCustomizationTools } from "./payment-customizations.js";
+import { registerShopifyPaymentsTools } from "./shopify-payments.js";
 import { registerReturnsTools } from "./returns.js";
+import { registerStoreCreditTools } from "./store-credit.js";
+import { registerSubscriptionTools } from "./subscriptions.js";
 import { registerScriptTagTools } from "./script-tags.js";
 import { registerThemeTools } from "./themes.js";
 import { registerTranslationTools } from "./translations.js";
@@ -74,7 +78,11 @@ const TOOL_REGISTRARS: Record<string, (server: McpServer, client: ShopifyGraphQL
   'returns': registerReturnsTools,
   'checkouts': registerCheckoutTools,
   'payment-terms': registerPaymentTermsTools,
+  'payment-customizations': registerPaymentCustomizationTools,
+  'shopify-payments': registerShopifyPaymentsTools,
   'order-edits': registerOrderEditTools,
+  'store-credit': registerStoreCreditTools,
+  'subscriptions': registerSubscriptionTools,
   'companies': registerCompanyTools,
   'cash-tracking': registerCashTrackingTools,
   'fulfillment-constraints': registerFulfillmentConstraintTools,
