@@ -30,6 +30,19 @@ import { registerPriceRuleTools } from "./price-rules.js";
 import { registerDiscoveryTools } from "./discovery.js";
 import { registerFileTools } from "./files.js";
 import { registerFulfillmentConstraintTools } from "./fulfillment-constraints.js";
+import { registerGiftCardTools } from "./gift-cards.js";
+import { registerInventoryShipmentTools } from "./inventory-shipments.js";
+import { registerInventoryTransferTools } from "./inventory-transfers.js";
+import { registerLegalPolicyTools } from "./legal-policies.js";
+import { registerDeliveryOptionGeneratorTools } from "./delivery-option-generators.js";
+import { registerLocaleTools } from "./locales.js";
+import { registerMarketingCampaignTools } from "./marketing-campaigns.js";
+import { registerMarketTools } from "./markets.js";
+import { registerNavigationTools } from "./navigation.js";
+import { registerPageTools } from "./pages.js";
+import { registerOrderEditTools } from "./order-edits.js";
+import { registerPackingSlipTemplateTools } from "./packing-slip-templates.js";
+import { registerPaymentTermsTools } from "./payment-terms.js";
 
 export function registerTools(server: McpServer): void {
   // Always register a health check tool first
@@ -111,4 +124,21 @@ export function registerTools(server: McpServer): void {
   registerDiscoveryTools(server, client);
   registerFileTools(server, client);
   registerFulfillmentConstraintTools(server, client);
+  
+  // Batch 3: Additional scopes
+  registerGiftCardTools(server, client);
+  registerInventoryShipmentTools(server, client);
+  registerInventoryTransferTools(server, client);
+  registerLegalPolicyTools(server, client);
+  registerDeliveryOptionGeneratorTools(server, client);
+  registerLocaleTools(server, client);
+  registerMarketingCampaignTools(server, client);
+  
+  // Batch 4: Markets, Navigation, Pages, Order Edits, Payment Terms
+  registerMarketTools(server, client);
+  registerNavigationTools(server, client);
+  registerPageTools(server, client);
+  registerOrderEditTools(server, client);
+  registerPackingSlipTemplateTools(server, client);
+  registerPaymentTermsTools(server, client);
 }
