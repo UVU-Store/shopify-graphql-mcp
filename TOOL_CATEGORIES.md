@@ -426,19 +426,62 @@ Inventory automation and advanced fulfillment workflows.
 
 ---
 
-## Configuration Examples
+## Configuration
 
-### Minimal (Essential Only) - Recommended for Most Users
+### Using Boolean Flags (Recommended)
+
+Each category can be enabled/disabled with individual boolean flags:
+
 ```json
 {
   "env": {
-    "ENABLED_TOOL_CATEGORIES": "essential"
+    "ENABLE_ESSENTIAL": "true",
+    "ENABLE_COMMERCE": "true",
+    "ENABLE_MARKETING": "false",
+    "ENABLE_CONTENT": "false",
+    "ENABLE_ADVANCED": "false",
+    "ENABLE_REPORTING": "false",
+    "ENABLE_AUTOMATION": "false"
   }
 }
 ```
-~35 tools enabled
 
-### Standard (Essential + Commerce)
+#### Quick Presets
+
+**Essential Only (~35 tools)**
+```json
+{
+  "env": {
+    "ENABLE_ESSENTIAL": "true",
+    "ENABLE_COMMERCE": "false",
+    "ENABLE_MARKETING": "false",
+    "ENABLE_CONTENT": "false",
+    "ENABLE_ADVANCED": "false",
+    "ENABLE_REPORTING": "false",
+    "ENABLE_AUTOMATION": "false"
+  }
+}
+```
+
+**Essential + Commerce (~90 tools)**
+```json
+{
+  "env": {
+    "ENABLE_ESSENTIAL": "true",
+    "ENABLE_COMMERCE": "true",
+    "ENABLE_MARKETING": "false",
+    "ENABLE_CONTENT": "false",
+    "ENABLE_ADVANCED": "false",
+    "ENABLE_REPORTING": "false",
+    "ENABLE_AUTOMATION": "false"
+  }
+}
+```
+
+### Legacy Format (Still Supported)
+
+You can also use the comma-separated format:
+
 ```json
 {
   "env": {
@@ -446,78 +489,16 @@ Inventory automation and advanced fulfillment workflows.
   }
 }
 ```
-~90 tools enabled
 
-### Marketing Focus
-```json
-{
-  "env": {
-    "ENABLED_TOOL_CATEGORIES": "essential,marketing"
-  }
-}
-```
-~55 tools enabled
+Valid values:
+- `"all"` - Enable all categories (default if nothing is set)
+- `"none"` - Disable all categories
+- `"essential"` - Only essential
+- `"essential,commerce,marketing"` - Multiple categories
 
-### Full Power User
-```json
-{
-  "env": {
-    "ENABLED_TOOL_CATEGORIES": "essential,commerce,marketing,content"
-  }
-}
-```
-~135 tools enabled
+### Default Behavior
 
-### Everything Enabled
-```json
-{
-  "env": {
-    "ENABLED_TOOL_CATEGORIES": "all"
-  }
-}
-```
-All ~180+ tools enabled (may overwhelm some IDEs)
-
-### Tools Only (No Content/Marketing)
-```json
-{
-  "env": {
-    "ENABLED_TOOL_CATEGORIES": "essential,commerce,advanced,automation"
-  }
-}
-```
-~125 tools, focused on operations
-
-## Environment Variable
-
-Set via environment variable when running the server:
-
-```bash
-ENABLED_TOOL_CATEGORIES=essential,marketing node dist/index.js
-```
-
-Or in your MCP config:
-
-```json
-{
-  "mcpServers": {
-    "shopify-graphql": {
-      "command": "node",
-      "args": ["/path/to/shopify-graphql-mcp/dist/index.js"],
-      "env": {
-        "SHOPIFY_ACCESS_TOKEN": "shpat_xxxxx",
-        "SHOPIFY_STORE_URL": "your-store.myshopify.com",
-        "SHOPIFY_STORE_API_URL": "https://your-store.myshopify.com/admin/api/2025-01/graphql.json",
-        "ENABLED_TOOL_CATEGORIES": "essential"
-      }
-    }
-  }
-}
-```
-
-## Default Behavior
-
-If `ENABLED_TOOL_CATEGORIES` is not set, **all categories are enabled** (backward compatible).
+If no boolean flags or `ENABLED_TOOL_CATEGORIES` is set, **all categories are enabled** (backward compatible).
 
 To see which categories are available and their status, use the `health_check` tool - it returns the list of enabled categories in its response.
 

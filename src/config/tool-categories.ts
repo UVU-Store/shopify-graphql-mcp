@@ -2,13 +2,17 @@
  * Tool category configuration for Shopify GraphQL MCP
  * 
  * Tools are organized into categories. Users can enable/disable categories
- * via the ENABLED_TOOL_CATEGORIES environment variable.
+ * via environment variables using boolean flags.
  * 
  * Examples:
- *   ENABLED_TOOL_CATEGORIES=essential              # Only essential tools (~35 tools)
- *   ENABLED_TOOL_CATEGORIES=essential,marketing    # Essential + marketing tools
- *   ENABLED_TOOL_CATEGORIES=all                    # All tools (default if not set)
- *   ENABLED_TOOL_CATEGORIES=none                   # Only health check
+ *   ENABLE_ESSENTIAL=true                 # Enable essential category
+ *   ENABLE_COMMERCE=true                   # Enable commerce category
+ *   ENABLE_MARKETING=false                 # Disable marketing category
+ *   
+ *   Or use the legacy comma-separated format:
+ *   ENABLED_TOOL_CATEGORIES=essential,commerce
+ *   ENABLED_TOOL_CATEGORIES=all           # Enable all categories
+ *   ENABLED_TOOL_CATEGORIES=none          # Disable all categories
  */
 
 export type ToolCategory = 
@@ -174,16 +178,39 @@ export const ALL_CATEGORIES: CategoryConfig[] = [
 ];
 
 /**
- * Parse the ENABLED_TOOL_CATEGORIES environment variable
- * Returns array of enabled category names
+ * Parse environment variables to determine enabled categories
  * 
- * Supports:
- *   - "all" : enables all categories
- *   - "none" : only health check (no tools)
- *   - "essential" : only essential category
- *   - "essential,marketing,content" : comma-separated list
+ * Supports two formats:
+ * 1. Boolean flags: ENABLE_<CATEGORY>=true/false (new approach)
+ * 2. Legacy comma-separated: ENABLED_TOOL_CATEGORIES=essential,commerce
+ * 
+ * Boolean flags take precedence if set. If no boolean flags are set,
+ * falls back to legacy format for backward compatibility.
  */
 export function getEnabledCategories(): string[] {
+  const enabled: string[] = [];
+  
+  // Check for boolean flags first (new approach)
+  // Format: ENABLE_ESSENTIAL=true, ENABLE_COMMERCE=false, etc.
+  for (const category of ALL_CATEGORIES) {
+    const envVar = `ENABLE_${category.name.toUpperCase()}`;
+    const value = process.env[envVar];
+    
+    if (value !== undefined) {
+      // Boolean flag is explicitly set
+      if (value.toLowerCase() === 'true') {
+        enabled.push(category.name);
+      }
+      // If 'false', don't add to enabled list
+    }
+  }
+  
+  // If any boolean flags were set, return only those
+  if (ALL_CATEGORIES.some(c => process.env[`ENABLE_${c.name.toUpperCase()}`] !== undefined)) {
+    return enabled;
+  }
+  
+  // Fall back to legacy comma-separated format
   const envValue = process.env.ENABLED_TOOL_CATEGORIES?.toLowerCase().trim();
   
   if (!envValue || envValue === 'all') {
