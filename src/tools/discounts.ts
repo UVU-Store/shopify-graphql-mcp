@@ -100,6 +100,93 @@ export function registerDiscountTools(server: McpServer, client: ShopifyGraphQLC
     }
   );
 
+  // Get Single Discount
+  server.registerTool(
+    "get_discount_code",
+    {
+      description: "Fetch a specific discount code by ID",
+      inputSchema: {
+        id: z.string().describe("Discount ID (e.g., 'gid://shopify/DiscountCodeNode/123456789')"),
+      },
+    },
+    async ({ id }) => {
+      const graphqlQuery = `
+        query GetDiscountCode($id: ID!) {
+          codeDiscountNode(id: $id) {
+            id
+            codeDiscount {
+              ... on DiscountCodeBasic {
+                title
+                status
+                createdAt
+                updatedAt
+                startsAt
+                endsAt
+                usageLimit
+                appliesOncePerCustomer
+                customerSelection {
+                  ... on DiscountCustomerAll {
+                    allCustomers
+                  }
+                }
+                customerGets {
+                  items {
+                    ... on AllDiscountItems {
+                      allItems
+                    }
+                  }
+                  value {
+                    ... on DiscountPercentage {
+                      percentage
+                    }
+                    ... on DiscountAmount {
+                      amount
+                      appliesOnEachItem
+                    }
+                  }
+                }
+              }
+              ... on DiscountCodeBxgy {
+                title
+                status
+                createdAt
+                updatedAt
+                startsAt
+                endsAt
+              }
+              ... on DiscountCodeFreeShipping {
+                title
+                status
+                createdAt
+                updatedAt
+                startsAt
+                endsAt
+              }
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(graphqlQuery, { id });
+        
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
   // Create Basic Discount
   server.registerTool(
     "create_discount",
@@ -173,6 +260,74 @@ export function registerDiscountTools(server: McpServer, client: ShopifyGraphQLC
 
       try {
         const result = await client.execute(mutation, { input });
+        
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Update Discount
+  server.registerTool(
+    "update_discount_code",
+    {
+      description: "Update an existing discount code",
+      inputSchema: {
+        id: z.string().describe("Discount ID (e.g., 'gid://shopify/DiscountCodeNode/123456789')"),
+        title: z.string().optional().describe("Discount title"),
+        startsAt: z.string().optional().describe("Start date (ISO 8601 format)"),
+        endsAt: z.string().optional().describe("End date (ISO 8601 format)"),
+        status: z.enum(["ACTIVE", "EXPIRED"]).optional().describe("Discount status"),
+        usageLimit: z.number().optional().describe("Total number of times this code can be used"),
+        appliesOncePerCustomer: z.boolean().optional().describe("Limit to one use per customer"),
+      },
+    },
+    async ({ id, title, startsAt, endsAt, status, usageLimit, appliesOncePerCustomer }) => {
+      const mutation = `
+        mutation DiscountCodeBasicUpdate($id: ID!, $input: DiscountCodeBasicInput!) {
+          discountCodeBasicUpdate(id: $id, input: $input) {
+            codeDiscountNode {
+              id
+              codeDiscount {
+                ... on DiscountCodeBasic {
+                  title
+                  status
+                  createdAt
+                  updatedAt
+                  startsAt
+                  endsAt
+                }
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      const input: Record<string, unknown> = {};
+      if (title) input.title = title;
+      if (startsAt) input.startsAt = startsAt;
+      if (endsAt !== undefined) input.endsAt = endsAt;
+      if (status) input.status = status;
+      if (usageLimit !== undefined) input.usageLimit = usageLimit;
+      if (appliesOncePerCustomer !== undefined) input.appliesOncePerCustomer = appliesOncePerCustomer;
+
+      try {
+        const result = await client.execute(mutation, { id, input });
         
         if (result.errors) {
           return {

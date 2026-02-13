@@ -4,7 +4,7 @@ import { ShopifyGraphQLClient } from "../utils/graphql-client.js";
 
 // Types for menu items
 interface MenuItem {
-  id: string;
+  id?: string;
   title: string;
   url?: string;
   type?: string;
@@ -36,11 +36,15 @@ function findMenuItem(items: MenuItem[], targetId: string): MenuItem | null {
 }
 
 // Helper function to convert MenuItem to MenuItemUpdateInput format
+// Omits 'id' field for new items (empty string) - only includes it for existing items
 function convertToUpdateInput(item: MenuItem): Record<string, unknown> {
   const input: Record<string, unknown> = {
-    id: item.id,
     title: item.title,
   };
+  // Only include id for existing items (non-empty), omit for new items
+  if (item.id && item.id.trim() !== '') {
+    input.id = item.id;
+  }
   if (item.url) input.url = item.url;
   if (item.type) input.type = item.type;
   if (item.resourceId) input.resourceId = item.resourceId;
@@ -354,13 +358,12 @@ export function registerNavigationTools(server: McpServer, client: ShopifyGraphQ
       }
 
       // Replace the children
+      // Note: Omit 'id' field entirely for new items - convertToUpdateInput will handle this
       targetItem.items = children.map(child => ({
-        id: '', // New items won't have IDs yet
         title: child.title,
         url: child.url,
         type: child.type,
         items: child.items?.map(nestedChild => ({
-          id: '',
           title: nestedChild.title,
           url: nestedChild.url,
           type: nestedChild.type,

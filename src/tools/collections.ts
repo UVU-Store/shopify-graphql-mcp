@@ -309,6 +309,64 @@ export function registerCollectionTools(server: McpServer, client: ShopifyGraphQ
     }
   );
 
+  // Update Collection
+  server.registerTool(
+    "update_collection",
+    {
+      description: "Update an existing collection",
+      inputSchema: {
+        id: z.string().describe("Collection ID (e.g., 'gid://shopify/Collection/123456789')"),
+        title: z.string().optional().describe("Collection title"),
+        descriptionHtml: z.string().optional().describe("Collection description (HTML)"),
+        sortOrder: z.enum(["MANUAL", "BEST_SELLING", "ALPHA_ASC", "ALPHA_DESC", "PRICE_ASC", "PRICE_DESC", "CREATED", "CREATED_DESC"]).optional().describe("Product sort order"),
+      },
+    },
+    async ({ id, title, descriptionHtml, sortOrder }) => {
+      const mutation = `
+        mutation CollectionUpdate($input: CollectionInput!) {
+          collectionUpdate(input: $input) {
+            collection {
+              id
+              title
+              handle
+              descriptionHtml
+              sortOrder
+              updatedAt
+              productsCount
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      const input: Record<string, unknown> = { id };
+      if (title) input.title = title;
+      if (descriptionHtml) input.descriptionHtml = descriptionHtml;
+      if (sortOrder) input.sortOrder = sortOrder;
+
+      try {
+        const result = await client.execute(mutation, { input });
+        
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
   // Delete Collection
   server.registerTool(
     "delete_collection",

@@ -381,4 +381,61 @@ export function registerOrderTools(server: McpServer, client: ShopifyGraphQLClie
     }
   );
 
+  // Cancel Order
+  server.registerTool(
+    "cancel_order",
+    {
+      description: "Cancel an order",
+      inputSchema: {
+        id: z.string().describe("Order ID (e.g., 'gid://shopify/Order/123456789')"),
+        reason: z.string().optional().describe("Cancellation reason"),
+        refund: z.boolean().optional().describe("Whether to refund the order"),
+        restock: z.boolean().optional().describe("Whether to restock inventory"),
+      },
+    },
+    async ({ id, reason, refund = true, restock = true }) => {
+      const mutation = `
+        mutation OrderCancel($orderId: ID!, $reason: String, $refund: Boolean, $restock: Boolean) {
+          orderCancel(
+            orderId: $orderId
+            reason: $reason
+            refund: $refund
+            restock: $restock
+          ) {
+            order {
+              id
+              name
+              displayFinancialStatus
+              displayFulfillmentStatus
+              cancelledAt
+              cancelReason
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { orderId: id, reason, refund, restock });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
 }
