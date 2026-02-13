@@ -68,6 +68,79 @@ export function registerLocationTools(server: McpServer, client: ShopifyGraphQLC
     }
   );
 
+  // Get Single Location
+  server.registerTool(
+    "get_location",
+    {
+      description: "Fetch a specific location by ID",
+      inputSchema: {
+        id: z.string().describe("Location ID (e.g., 'gid://shopify/Location/123456789')"),
+      },
+    },
+    async ({ id }) => {
+      const graphqlQuery = `
+        query GetLocation($id: ID!) {
+          location(id: $id) {
+            id
+            name
+            address {
+              address1
+              address2
+              city
+              province
+              country
+              zip
+              phone
+            }
+            isActive
+            isPrimary
+            fulfillsOnlineOrders
+            createdAt
+            updatedAt
+            inventoryLevels(first: 20) {
+              edges {
+                node {
+                  id
+                  available
+                  item {
+                    id
+                    sku
+                    variant {
+                      id
+                      title
+                      product {
+                        id
+                        title
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(graphqlQuery, { id });
+        
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
   // Create Location
   server.registerTool(
     "create_location",

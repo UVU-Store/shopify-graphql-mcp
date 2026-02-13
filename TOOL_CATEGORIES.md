@@ -4,15 +4,20 @@ The Shopify GraphQL MCP supports organizing tools into categories for easy manag
 
 ## Categories
 
-| Category | Description | ~Tool Count | Modules |
-|----------|-------------|-------------|---------|
-| `essential` | Core e-commerce operations | ~35 | shop, products, orders, customers, inventory, collections, locations, draft-orders, discounts, fulfillments |
-| `commerce` | Extended commerce features | ~25 | gift-cards, returns, checkouts, payment-terms, order-edits, companies, cash-tracking, fulfillment-constraints, delivery-customizations, delivery-option-generators, custom-fulfillment-services |
-| `marketing` | Marketing and promotional tools | ~20 | marketing-campaigns, markets, channels, discovery, price-rules, analytics, pixels, publications |
-| `content` | Store content and theming | ~25 | pages, navigation, themes, files, metaobjects, translations, locales, legal-policies |
-| `advanced` | Complex/technical features | ~20 | cart-transforms, validations, audit-events, custom-pixels, script-tags, customer-data-erasure, customer-merge, customer-payment-methods, privacy-settings, shipping, product-listings |
-| `reporting` | Reports and feedback | ~15 | reports, resource-feedbacks, apps |
-| `automation` | Inventory automation | ~15 | inventory-shipments, inventory-transfers, packing-slip-templates |
+| Category | Description | ~Tool Count | Modules | Status |
+|----------|-------------|-------------|---------|--------|
+| `essential` | Core e-commerce operations | ~35 | shop, products, orders, customers, inventory, collections, locations, draft-orders, discounts, fulfillments | ✅ |
+| `commerce` | Extended commerce features | ~25 | gift-cards, returns, checkouts, payment-terms, order-edits, companies, cash-tracking, fulfillment-constraints, delivery-customizations, delivery-option-generators, custom-fulfillment-services | ✅ |
+| `marketing` | Marketing and promotional tools | ~20 | marketing-campaigns, markets, channels, discovery, price-rules, analytics, pixels, publications | ✅ |
+| `content` | Store content and theming | ~25 | pages, navigation, themes, files, metaobjects, translations, locales, legal-policies | ✅ |
+| `advanced` | Complex/technical features | ~20 | cart-transforms, validations, audit-events, custom-pixels, script-tags, customer-data-erasure, customer-merge, customer-payment-methods, privacy-settings, shipping, product-listings | ✅ |
+| `reporting` | Reports and feedback | ~15 | reports, resource-feedbacks, apps | ✅ |
+| `automation` | Inventory automation | ~15 | inventory-shipments, inventory-transfers, packing-slip-templates | ✅ |
+
+### Status Legend
+
+- **✅** - Category implementation is complete (all documented tools are implemented)
+- **⏳** - Category implementation is in progress (some tools pending)
 
 ## Configuration Examples
 
