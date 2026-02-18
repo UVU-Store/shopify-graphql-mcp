@@ -84,10 +84,11 @@ export const COMMERCE_CATEGORIES: CategoryConfig = {
  */
 export const MARKETING_CATEGORIES: CategoryConfig = {
   name: 'marketing',
-  description: 'Marketing: campaigns, markets, channels, discovery, price rules',
-  toolCount: 20,
+  description: 'Marketing: campaigns, engagement, markets, channels, discovery, price rules',
+  toolCount: 22,
   modules: [
     'marketing-campaigns',
+    'marketing-engagement',
     'markets',
     'channels',
     'discovery',
@@ -122,8 +123,8 @@ export const CONTENT_CATEGORIES: CategoryConfig = {
  */
 export const ADVANCED_CATEGORIES: CategoryConfig = {
   name: 'advanced',
-  description: 'Advanced: cart transforms, validations, audit events, custom pixels, scripts',
-  toolCount: 20,
+  description: 'Advanced: cart transforms, validations, audit events, webhooks, bulk operations, custom pixels, scripts',
+  toolCount: 30,
   modules: [
     'cart-transforms',
     'validations',
@@ -136,6 +137,8 @@ export const ADVANCED_CATEGORIES: CategoryConfig = {
     'privacy-settings',
     'shipping',
     'product-listings',
+    'webhooks',
+    'bulk-operations',
   ],
 };
 

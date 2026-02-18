@@ -40,6 +40,7 @@ import { registerLegalPolicyTools } from "./legal-policies.js";
 import { registerDeliveryOptionGeneratorTools } from "./delivery-option-generators.js";
 import { registerLocaleTools } from "./locales.js";
 import { registerMarketingCampaignTools } from "./marketing-campaigns.js";
+import { registerMarketingEngagementTools } from "./marketing-engagement.js";
 import { registerMarketTools } from "./markets.js";
 import { registerNavigationTools } from "./navigation.js";
 import { registerPageTools } from "./pages.js";
@@ -61,6 +62,8 @@ import { registerShippingTools } from "./shipping.js";
 import { registerReportTools } from "./reports.js";
 import { registerResourceFeedbackTools } from "./resource-feedbacks.js";
 import { registerProductListingTools } from "./product-listings.js";
+import { registerWebhookTools } from "./webhooks.js";
+import { registerBulkOperationTools } from "./bulk-operations.js";
 
 // Map of module names to their registration functions
 const TOOL_REGISTRARS: Record<string, (server: McpServer, client: ShopifyGraphQLClient) => void> = {
@@ -90,6 +93,7 @@ const TOOL_REGISTRARS: Record<string, (server: McpServer, client: ShopifyGraphQL
   'delivery-option-generators': registerDeliveryOptionGeneratorTools,
   'custom-fulfillment-services': registerCustomFulfillmentServiceTools,
   'marketing-campaigns': registerMarketingCampaignTools,
+  'marketing-engagement': registerMarketingEngagementTools,
   'markets': registerMarketTools,
   'channels': registerChannelTools,
   'discovery': registerDiscoveryTools,
@@ -122,6 +126,8 @@ const TOOL_REGISTRARS: Record<string, (server: McpServer, client: ShopifyGraphQL
   'inventory-shipments': registerInventoryShipmentTools,
   'inventory-transfers': registerInventoryTransferTools,
   'packing-slip-templates': registerPackingSlipTemplateTools,
+  'webhooks': registerWebhookTools,
+  'bulk-operations': registerBulkOperationTools,
 };
 
 export function registerTools(server: McpServer): void {

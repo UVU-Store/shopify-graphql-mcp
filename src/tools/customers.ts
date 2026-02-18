@@ -356,4 +356,178 @@ export function registerCustomerTools(server: McpServer, client: ShopifyGraphQLC
       }
     }
   );
+
+  // Create Customer Address
+  server.registerTool(
+    "create_customer_address",
+    {
+      description: "Create a new address for a customer",
+      inputSchema: {
+        customerId: z.string().describe("Customer ID"),
+        address: z.object({
+          firstName: z.string().optional(),
+          lastName: z.string().optional(),
+          address1: z.string(),
+          address2: z.string().optional(),
+          city: z.string(),
+          province: z.string().optional(),
+          provinceCode: z.string().optional(),
+          country: z.string().optional(),
+          countryCode: z.string().optional(),
+          zip: z.string(),
+          phone: z.string().optional(),
+        }).describe("Address to create"),
+        setAsDefault: z.boolean().optional().describe("Set as default address"),
+      },
+    },
+    async ({ customerId, address, setAsDefault }) => {
+      const mutation = `
+        mutation CustomerAddressCreate($customerId: ID!, $address: MailingAddressInput!, $setAsDefault: Boolean) {
+          customerAddressCreate(customerId: $customerId, address: $address, setAsDefault: $setAsDefault) {
+            customerAddress {
+              id
+              address1
+              address2
+              city
+              province
+              country
+              zip
+              phone
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { customerId, address, setAsDefault });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Update Customer Address
+  server.registerTool(
+    "update_customer_address",
+    {
+      description: "Update a customer's existing address",
+      inputSchema: {
+        customerId: z.string().describe("Customer ID"),
+        addressId: z.string().describe("Address ID to update"),
+        address: z.object({
+          firstName: z.string().optional(),
+          lastName: z.string().optional(),
+          address1: z.string(),
+          address2: z.string().optional(),
+          city: z.string(),
+          province: z.string().optional(),
+          provinceCode: z.string().optional(),
+          country: z.string().optional(),
+          countryCode: z.string().optional(),
+          zip: z.string(),
+          phone: z.string().optional(),
+        }).describe("Updated address data"),
+        setAsDefault: z.boolean().optional().describe("Set as default address"),
+      },
+    },
+    async ({ customerId, addressId, address, setAsDefault }) => {
+      const mutation = `
+        mutation CustomerAddressUpdate($customerId: ID!, $addressId: ID!, $address: MailingAddressInput!, $setAsDefault: Boolean) {
+          customerAddressUpdate(customerId: $customerId, addressId: $addressId, address: $address, setAsDefault: $setAsDefault) {
+            customerAddress {
+              id
+              address1
+              address2
+              city
+              province
+              country
+              zip
+              phone
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { customerId, addressId, address, setAsDefault });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Delete Customer Address
+  server.registerTool(
+    "delete_customer_address",
+    {
+      description: "Delete a customer's address",
+      inputSchema: {
+        customerId: z.string().describe("Customer ID"),
+        addressId: z.string().describe("Address ID to delete"),
+      },
+    },
+    async ({ customerId, addressId }) => {
+      const mutation = `
+        mutation CustomerAddressDelete($customerId: ID!, $addressId: ID!) {
+          customerAddressDelete(customerId: $customerId, addressId: $addressId) {
+            deletedCustomerAddressId
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { customerId, addressId });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
 }

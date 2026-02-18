@@ -110,4 +110,46 @@ export function registerCustomerDataErasureTools(server: McpServer, client: Shop
       }
     }
   );
+
+  // Cancel Customer Data Erasure
+  server.registerTool(
+    "cancel_customer_data_erasure",
+    {
+      description: "Cancel a pending customer data erasure request (GDPR). Can only cancel requests that haven't started processing yet.",
+      inputSchema: {
+        customerId: z.string().describe("Customer ID for whom to cancel the pending data erasure"),
+      },
+    },
+    async ({ customerId }) => {
+      const mutation = `
+        mutation CustomerCancelDataErasure($customerId: ID!) {
+          customerCancelDataErasure(customerId: $customerId) {
+            customerId
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { customerId });
+        
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
 }

@@ -386,4 +386,232 @@ export function registerGiftCardTools(server: McpServer, client: ShopifyGraphQLC
       }
     }
   );
+
+  // Credit Gift Card
+  server.registerTool(
+    "credit_gift_card",
+    {
+      description: "Add credit to a gift card. Creates a credit transaction that increases the gift card balance.",
+      inputSchema: {
+        id: z.string().describe("Gift Card ID"),
+        amount: z.string().describe("Amount to credit"),
+        currencyCode: z.string().describe("Currency code (e.g., 'USD')"),
+        note: z.string().optional().describe("Transaction note"),
+      },
+    },
+    async ({ id, amount, currencyCode, note }) => {
+      const mutation = `
+        mutation GiftCardCredit($id: ID!, $creditInput: GiftCardCreditInput!) {
+          giftCardCredit(id: $id, creditInput: $creditInput) {
+            giftCardCreditTransaction {
+              id
+              amount {
+                amount
+                currencyCode
+              }
+              processedAt
+              note
+              giftCard {
+                id
+                balance {
+                  amount
+                  currencyCode
+                }
+              }
+            }
+            userErrors {
+              message
+              field
+              code
+            }
+          }
+        }
+      `;
+
+      const creditInput: Record<string, unknown> = {
+        creditAmount: {
+          amount,
+          currencyCode,
+        },
+      };
+      if (note) creditInput.note = note;
+
+      try {
+        const result = await client.execute(mutation, { id, creditInput });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Debit Gift Card
+  server.registerTool(
+    "debit_gift_card",
+    {
+      description: "Debit (deduct) from a gift card. Creates a debit transaction that decreases the gift card balance.",
+      inputSchema: {
+        id: z.string().describe("Gift Card ID"),
+        amount: z.string().describe("Amount to debit"),
+        currencyCode: z.string().describe("Currency code (e.g., 'USD')"),
+        note: z.string().optional().describe("Transaction note"),
+      },
+    },
+    async ({ id, amount, currencyCode, note }) => {
+      const mutation = `
+        mutation GiftCardDebit($id: ID!, $debitInput: GiftCardDebitInput!) {
+          giftCardDebit(id: $id, debitInput: $debitInput) {
+            giftCardDebitTransaction {
+              id
+              amount {
+                amount
+                currencyCode
+              }
+              processedAt
+              note
+              giftCard {
+                id
+                balance {
+                  amount
+                  currencyCode
+                }
+              }
+            }
+            userErrors {
+              message
+              field
+              code
+            }
+          }
+        }
+      `;
+
+      const debitInput: Record<string, unknown> = {
+        debitAmount: {
+          amount,
+          currencyCode,
+        },
+      };
+      if (note) debitInput.note = note;
+
+      try {
+        const result = await client.execute(mutation, { id, debitInput });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Send Gift Card Notification to Customer
+  server.registerTool(
+    "send_gift_card_notification_to_customer",
+    {
+      description: "Send a gift card notification email to the customer associated with the gift card",
+      inputSchema: {
+        id: z.string().describe("Gift Card ID"),
+      },
+    },
+    async ({ id }) => {
+      const mutation = `
+        mutation GiftCardSendNotificationToCustomer($id: ID!) {
+          giftCardSendNotificationToCustomer(id: $id) {
+            giftCard {
+              id
+              note
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { id });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Send Gift Card Notification to Recipient
+  server.registerTool(
+    "send_gift_card_notification_to_recipient",
+    {
+      description: "Send a gift card notification email to the specified recipient",
+      inputSchema: {
+        id: z.string().describe("Gift Card ID"),
+      },
+    },
+    async ({ id }) => {
+      const mutation = `
+        mutation GiftCardSendNotificationToRecipient($id: ID!) {
+          giftCardSendNotificationToRecipient(id: $id) {
+            giftCard {
+              id
+              note
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { id });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
 }
