@@ -945,4 +945,108 @@ export function registerOrderTools(server: McpServer, client: ShopifyGraphQLClie
     }
   );
 
+  // Create Refund
+  server.registerTool(
+    "create_refund",
+    {
+      description: "Create a refund for an order. Supports refunding line items, shipping costs, and processing refunds through different payment methods.",
+      inputSchema: {
+        orderId: z.string().describe("Order ID"),
+        refundLineItems: z.array(z.object({
+          lineItemId: z.string().describe("Line Item ID"),
+          quantity: z.number().min(1).describe("Quantity to refund"),
+          restockType: z.enum(["no_restock", "cancel", "return"]).optional().describe("Restock behavior"),
+          locationId: z.string().optional().describe("Location ID for restocking"),
+        })).optional().describe("Line items to refund"),
+        shippingAmount: z.string().optional().describe("Shipping amount to refund"),
+        note: z.string().optional().describe("Refund note"),
+        transactions: z.array(z.object({
+          parentId: z.string().describe("Parent transaction ID"),
+          amount: z.string().describe("Refund amount"),
+          gateway: z.string().optional().describe("Payment gateway"),
+        })).optional().describe("Transaction details"),
+      },
+    },
+    async ({ orderId, refundLineItems, shippingAmount, note, transactions }) => {
+      const mutation = `
+        mutation RefundCreate($input: RefundInput!) {
+          refundCreate(input: $input) {
+            refund {
+              id
+              note
+              totalRefundedSet {
+                presentmentMoney {
+                  amount
+                  currencyCode
+                }
+              }
+              refundLineItems(first: 50) {
+                edges {
+                  node {
+                    lineItem {
+                      id
+                      title
+                    }
+                    quantity
+                  }
+                }
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      const input: Record<string, unknown> = { orderId };
+
+      if (refundLineItems && refundLineItems.length > 0) {
+        input.refundLineItems = refundLineItems.map(item => ({
+          lineItemId: item.lineItemId,
+          quantity: item.quantity,
+          ...(item.restockType && { restockType: item.restockType }),
+          ...(item.locationId && { locationId: item.locationId }),
+        }));
+      }
+
+      if (shippingAmount) {
+        input.shipping = { amount: shippingAmount };
+      }
+
+      if (note) {
+        input.note = note;
+      }
+
+      if (transactions && transactions.length > 0) {
+        input.transactions = transactions.map(t => ({
+          orderId,
+          parentId: t.parentId,
+          amount: t.amount,
+          kind: "REFUND",
+          ...(t.gateway && { gateway: t.gateway }),
+        }));
+      }
+
+      try {
+        const result = await client.execute(mutation, { input });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
 }

@@ -457,4 +457,208 @@ export function registerCompanyTools(server: McpServer, client: ShopifyGraphQLCl
       }
     }
   );
+
+  // Delete Company
+  server.registerTool(
+    "delete_company",
+    {
+      description: "Delete a B2B company",
+      inputSchema: {
+        id: z.string().describe("Company ID to delete"),
+      },
+    },
+    async ({ id }) => {
+      const mutation = `
+        mutation CompanyDelete($id: ID!) {
+          companyDelete(id: $id) {
+            deletedCompanyId
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { id });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Create Company Contact
+  server.registerTool(
+    "create_company_contact",
+    {
+      description: "Create a new contact for a B2B company",
+      inputSchema: {
+        companyId: z.string().describe("Company ID"),
+        firstName: z.string().describe("Contact first name"),
+        lastName: z.string().describe("Contact last name"),
+        email: z.string().email().describe("Contact email"),
+        phone: z.string().optional().describe("Contact phone"),
+        isMainContact: z.boolean().optional().describe("Whether this is the main contact"),
+      },
+    },
+    async ({ companyId, firstName, lastName, email, phone, isMainContact }) => {
+      const mutation = `
+        mutation CompanyContactCreate($companyId: ID!, $input: CompanyContactInput!) {
+          companyContactCreate(companyId: $companyId, input: $input) {
+            companyContact {
+              id
+              isMainContact
+              customer {
+                id
+                firstName
+                lastName
+                email
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      const input: Record<string, unknown> = { firstName, lastName, email };
+      if (phone) input.phone = phone;
+      if (isMainContact !== undefined) input.isMainContact = isMainContact;
+
+      try {
+        const result = await client.execute(mutation, { companyId, input });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Update Company Contact
+  server.registerTool(
+    "update_company_contact",
+    {
+      description: "Update an existing company contact",
+      inputSchema: {
+        companyContactId: z.string().describe("Company Contact ID"),
+        firstName: z.string().optional().describe("Contact first name"),
+        lastName: z.string().optional().describe("Contact last name"),
+        email: z.string().email().optional().describe("Contact email"),
+        phone: z.string().optional().describe("Contact phone"),
+      },
+    },
+    async ({ companyContactId, firstName, lastName, email, phone }) => {
+      const mutation = `
+        mutation CompanyContactUpdate($companyContactId: ID!, $input: CompanyContactInput!) {
+          companyContactUpdate(companyContactId: $companyContactId, input: $input) {
+            companyContact {
+              id
+              customer {
+                id
+                firstName
+                lastName
+                email
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      const input: Record<string, unknown> = {};
+      if (firstName) input.firstName = firstName;
+      if (lastName) input.lastName = lastName;
+      if (email) input.email = email;
+      if (phone) input.phone = phone;
+
+      try {
+        const result = await client.execute(mutation, { companyContactId, input });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Delete Company Contact
+  server.registerTool(
+    "delete_company_contact",
+    {
+      description: "Delete a company contact",
+      inputSchema: {
+        companyContactId: z.string().describe("Company Contact ID to delete"),
+      },
+    },
+    async ({ companyContactId }) => {
+      const mutation = `
+        mutation CompanyContactDelete($companyContactId: ID!) {
+          companyContactDelete(companyContactId: $companyContactId) {
+            deletedCompanyContactId
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { companyContactId });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
 }

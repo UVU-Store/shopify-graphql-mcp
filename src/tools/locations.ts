@@ -307,4 +307,139 @@ export function registerLocationTools(server: McpServer, client: ShopifyGraphQLC
       }
     }
   );
+
+  // Delete Location
+  server.registerTool(
+    "delete_location",
+    {
+      description: "Delete a location from the store",
+      inputSchema: {
+        locationId: z.string().describe("Location ID to delete"),
+      },
+    },
+    async ({ locationId }) => {
+      const mutation = `
+        mutation LocationDelete($locationId: ID!) {
+          locationDelete(locationId: $locationId) {
+            deletedLocationId
+            locationDeleteUserErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { locationId });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Activate Location
+  server.registerTool(
+    "activate_location",
+    {
+      description: "Activate a location so that you can stock inventory at the location",
+      inputSchema: {
+        locationId: z.string().describe("Location ID to activate"),
+      },
+    },
+    async ({ locationId }) => {
+      const mutation = `
+        mutation LocationActivate($locationId: ID!) {
+          locationActivate(locationId: $locationId) {
+            location {
+              id
+              name
+              isActive
+            }
+            locationActivateUserErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { locationId });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Deactivate Location
+  server.registerTool(
+    "deactivate_location",
+    {
+      description: "Deactivate a location and moves inventory, pending orders, and transfers to a destination location",
+      inputSchema: {
+        locationId: z.string().describe("Location ID to deactivate"),
+        destinationLocationId: z.string().optional().describe("Destination location for inventory transfer"),
+      },
+    },
+    async ({ locationId, destinationLocationId }) => {
+      const mutation = `
+        mutation LocationDeactivate($locationId: ID!, $destinationLocationId: ID) {
+          locationDeactivate(locationId: $locationId, destinationLocationId: $destinationLocationId) {
+            location {
+              id
+              name
+              isActive
+            }
+            locationDeactivateUserErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { locationId, destinationLocationId });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
 }

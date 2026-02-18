@@ -436,4 +436,340 @@ export function registerFulfillmentTools(server: McpServer, client: ShopifyGraph
       }
     }
   );
+
+  // Hold Fulfillment Order
+  server.registerTool(
+    "hold_fulfillment_order",
+    {
+      description: "Apply a fulfillment hold on a fulfillment order. Use this to pause fulfillment due to inventory issues, customer requests, or other reasons.",
+      inputSchema: {
+        id: z.string().describe("Fulfillment Order ID"),
+        reason: z.enum(["INVENTORY_OUT_OF_STOCK", "CUSTOMER_REQUEST", "FRAUD_RISK", "SHIPPING_DELAY", "OTHER"]).describe("Reason for the hold"),
+        reasonNotes: z.string().optional().describe("Additional notes about the hold"),
+        notifyMerchant: z.boolean().optional().describe("Notify the merchant about the hold"),
+      },
+    },
+    async ({ id, reason, reasonNotes, notifyMerchant }) => {
+      const mutation = `
+        mutation FulfillmentOrderHold($id: ID!, $fulfillmentHold: FulfillmentOrderHoldInput!) {
+          fulfillmentOrderHold(id: $id, fulfillmentHold: $fulfillmentHold) {
+            fulfillmentOrder {
+              id
+              status
+              requestStatus
+              fulfillmentHolds {
+                reason
+                reasonNotes
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      const fulfillmentHold: Record<string, unknown> = { reason };
+      if (reasonNotes) fulfillmentHold.reasonNotes = reasonNotes;
+      if (notifyMerchant !== undefined) fulfillmentHold.notifyMerchant = notifyMerchant;
+
+      try {
+        const result = await client.execute(mutation, { id, fulfillmentHold });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Release Fulfillment Hold
+  server.registerTool(
+    "release_fulfillment_hold",
+    {
+      description: "Release the fulfillment hold on a fulfillment order, allowing it to be fulfilled.",
+      inputSchema: {
+        id: z.string().describe("Fulfillment Order ID"),
+        holdIds: z.array(z.string()).optional().describe("Specific hold IDs to release (releases all if not provided)"),
+      },
+    },
+    async ({ id, holdIds }) => {
+      const mutation = `
+        mutation FulfillmentOrderReleaseHold($id: ID!, $holdIds: [ID!]) {
+          fulfillmentOrderReleaseHold(id: $id, holdIds: $holdIds) {
+            fulfillmentOrder {
+              id
+              status
+              requestStatus
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { id, holdIds });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Move Fulfillment Order
+  server.registerTool(
+    "move_fulfillment_order",
+    {
+      description: "Move a fulfillment order to a different location for fulfillment.",
+      inputSchema: {
+        id: z.string().describe("Fulfillment Order ID"),
+        newLocationId: z.string().describe("ID of the new location"),
+      },
+    },
+    async ({ id, newLocationId }) => {
+      const mutation = `
+        mutation FulfillmentOrderMove($id: ID!, $newLocationId: ID!) {
+          fulfillmentOrderMove(id: $id, newLocationId: $newLocationId) {
+            movedFulfillmentOrder {
+              id
+              status
+              assignedLocation {
+                id
+                name
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { id, newLocationId });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Open Fulfillment Order
+  server.registerTool(
+    "open_fulfillment_order",
+    {
+      description: "Mark a fulfillment order as open, ready for fulfillment.",
+      inputSchema: {
+        id: z.string().describe("Fulfillment Order ID"),
+      },
+    },
+    async ({ id }) => {
+      const mutation = `
+        mutation FulfillmentOrderOpen($id: ID!) {
+          fulfillmentOrderOpen(id: $id) {
+            fulfillmentOrder {
+              id
+              status
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { id });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Close Fulfillment Order
+  server.registerTool(
+    "close_fulfillment_order",
+    {
+      description: "Close a fulfillment order as incomplete, indicating the fulfillment service cannot ship remaining items.",
+      inputSchema: {
+        id: z.string().describe("Fulfillment Order ID"),
+        message: z.string().optional().describe("Optional message explaining why the order is being closed"),
+      },
+    },
+    async ({ id, message }) => {
+      const mutation = `
+        mutation FulfillmentOrderClose($id: ID!, $message: String) {
+          fulfillmentOrderClose(id: $id, message: $message) {
+            fulfillmentOrder {
+              id
+              status
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { id, message });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Cancel Fulfillment Order
+  server.registerTool(
+    "cancel_fulfillment_order",
+    {
+      description: "Cancel a fulfillment order.",
+      inputSchema: {
+        id: z.string().describe("Fulfillment Order ID"),
+      },
+    },
+    async ({ id }) => {
+      const mutation = `
+        mutation FulfillmentOrderCancel($id: ID!) {
+          fulfillmentOrderCancel(id: $id) {
+            fulfillmentOrder {
+              id
+              status
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { id });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Reschedule Fulfillment Order
+  server.registerTool(
+    "reschedule_fulfillment_order",
+    {
+      description: "Reschedule a scheduled fulfillment order to a new date and time.",
+      inputSchema: {
+        id: z.string().describe("Fulfillment Order ID"),
+        fulfillAt: z.string().describe("New fulfillment date and time (ISO 8601 format)"),
+      },
+    },
+    async ({ id, fulfillAt }) => {
+      const mutation = `
+        mutation FulfillmentOrderReschedule($id: ID!, $fulfillAt: DateTime!) {
+          fulfillmentOrderReschedule(id: $id, fulfillAt: $fulfillAt) {
+            fulfillmentOrder {
+              id
+              status
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      try {
+        const result = await client.execute(mutation, { id, fulfillAt });
+
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
 }
