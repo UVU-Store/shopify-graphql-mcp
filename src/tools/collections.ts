@@ -27,7 +27,9 @@ export function registerCollectionTools(server: McpServer, client: ShopifyGraphQ
                 title
                 handle
                 descriptionHtml
-                productsCount
+                productsCount {
+                  count
+                }
                 sortOrder
                 updatedAt
                 image {
@@ -82,7 +84,9 @@ export function registerCollectionTools(server: McpServer, client: ShopifyGraphQ
             title
             handle
             descriptionHtml
-            productsCount
+            productsCount {
+              count
+            }
             sortOrder
             updatedAt
             image {
@@ -168,7 +172,9 @@ export function registerCollectionTools(server: McpServer, client: ShopifyGraphQ
                 handle
                 descriptionHtml
                 updatedAt
-                productsCount
+                productsCount {
+                  count
+                }
                 ruleSet {
                   appliedDisjunctively
                   rules {
@@ -223,7 +229,9 @@ export function registerCollectionTools(server: McpServer, client: ShopifyGraphQ
                 handle
                 descriptionHtml
                 updatedAt
-                productsCount
+                productsCount {
+                  count
+                }
               }
               userErrors {
                 field
@@ -274,7 +282,9 @@ export function registerCollectionTools(server: McpServer, client: ShopifyGraphQ
             collection {
               id
               title
-              productsCount
+              productsCount {
+                count
+              }
             }
             userErrors {
               field
@@ -332,7 +342,9 @@ export function registerCollectionTools(server: McpServer, client: ShopifyGraphQ
               descriptionHtml
               sortOrder
               updatedAt
-              productsCount
+              productsCount {
+                count
+              }
             }
             userErrors {
               field

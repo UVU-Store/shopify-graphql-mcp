@@ -97,7 +97,7 @@ export interface Collection {
   title: string;
   handle: string;
   descriptionHtml?: string;
-  productsCount: number;
+  productsCount: { count: number };
   sortOrder: string;
   updatedAt: string;
 }
