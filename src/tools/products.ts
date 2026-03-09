@@ -204,17 +204,22 @@ export function registerProductTools(server: McpServer, client: ShopifyGraphQLCl
         tags: z.array(z.string()).optional().describe("Product tags"),
         status: z.enum(["ACTIVE", "ARCHIVED", "DRAFT"]).optional().describe("Product status"),
         variants: z.array(z.object({
-          title: z.string().describe("Variant title"),
+          title: z.string().describe("Variant title (e.g., 'Small / Blue')"),
           price: z.string().describe("Variant price"),
           sku: z.string().optional().describe("Variant SKU"),
+          barcode: z.string().optional().describe("Variant barcode"),
           inventoryQuantity: z.number().optional().describe("Inventory quantity"),
-        })).optional().describe("Product variants"),
+          optionValues: z.array(z.object({
+            name: z.string().describe("Option value name (e.g., 'Small', 'Blue')"),
+            optionName: z.string().describe("Option name (e.g., 'Size', 'Color')"),
+          })).optional().describe("Option values for this variant"),
+        })).optional().describe("Product variants (created via bulk API)"),
       },
     },
     async ({ title, descriptionHtml, vendor, productType, tags, status = "DRAFT", variants }) => {
-      const mutation = `
-        mutation ProductCreate($input: ProductInput!) {
-          productCreate(input: $input) {
+      const createMutation = `
+        mutation ProductCreate($input: ProductCreateInput!) {
+          productCreate(product: $input) {
             product {
               id
               title
@@ -226,17 +231,6 @@ export function registerProductTools(server: McpServer, client: ShopifyGraphQLCl
               createdAt
               updatedAt
               tags
-              variants(first: 10) {
-                edges {
-                  node {
-                    id
-                    title
-                    sku
-                    price
-                    inventoryQuantity
-                  }
-                }
-              }
             }
             userErrors {
               field
@@ -252,26 +246,97 @@ export function registerProductTools(server: McpServer, client: ShopifyGraphQLCl
       if (productType) input.productType = productType;
       if (tags) input.tags = tags;
       if (status) input.status = status;
-      if (variants && variants.length > 0) {
-        input.variants = variants.map(v => ({
+
+      try {
+        const createResult = await client.execute(createMutation, { input });
+        
+        if (createResult.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(createResult.errors, null, 2)}` }],
+          };
+        }
+
+        const productData = (createResult.data as { productCreate?: { product?: { id: string }; userErrors?: Array<{ field: string; message: string }> } })?.productCreate;
+        if (productData?.userErrors && productData.userErrors.length > 0) {
+          return {
+            content: [{ type: "text", text: `User Errors: ${JSON.stringify(productData.userErrors, null, 2)}` }],
+          };
+        }
+
+        const productId = productData?.product?.id;
+        if (!productId) {
+          return {
+            content: [{ type: "text", text: "Failed to create product" }],
+          };
+        }
+
+        if (!variants || variants.length === 0) {
+          return {
+            content: [{ type: "text", text: JSON.stringify(createResult.data, null, 2) }],
+          };
+        }
+
+        const bulkMutation = `
+          mutation ProductVariantsBulkCreate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+            productVariantsBulkCreate(productId: $productId, variants: $variants) {
+              product {
+                id
+                title
+                variants(first: 50) {
+                  edges {
+                    node {
+                      id
+                      title
+                      sku
+                      price
+                      inventoryQuantity
+                    }
+                  }
+                }
+              }
+              productVariants {
+                id
+                title
+                sku
+                price
+              }
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        `;
+
+        const variantsInput = variants.map(v => ({
           title: v.title,
           price: v.price,
           ...(v.sku && { sku: v.sku }),
-          ...(v.inventoryQuantity !== undefined && { inventoryQuantities: [{ availableQuantity: v.inventoryQuantity, locationId: "gid://shopify/Location/1" }] }),
+          ...(v.barcode && { barcode: v.barcode }),
+          ...(v.optionValues && { optionValues: v.optionValues.map(ov => ({
+            name: ov.name,
+            optionName: ov.optionName,
+          })) }),
         }));
-      }
 
-      try {
-        const result = await client.execute(mutation, { input });
+        const bulkResult = await client.execute(bulkMutation, { productId, variants: variantsInput });
         
-        if (result.errors) {
+        if (bulkResult.errors) {
           return {
-            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+            content: [{ type: "text", text: `Product created but variant creation failed. GraphQL Errors: ${JSON.stringify(bulkResult.errors, null, 2)}` }],
+          };
+
+        }
+
+        const bulkData = (bulkResult.data as { productVariantsBulkCreate?: { userErrors?: Array<{ field: string; message: string }> } })?.productVariantsBulkCreate;
+        if (bulkData?.userErrors && bulkData.userErrors.length > 0) {
+          return {
+            content: [{ type: "text", text: `Product created but variant creation had errors: ${JSON.stringify(bulkData.userErrors, null, 2)}` }],
           };
         }
 
         return {
-          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+          content: [{ type: "text", text: JSON.stringify(bulkResult.data, null, 2) }],
         };
       } catch (error) {
         return {

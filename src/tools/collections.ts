@@ -420,4 +420,110 @@ export function registerCollectionTools(server: McpServer, client: ShopifyGraphQ
       }
     }
   );
+
+  // Publish Collection to Sales Channels
+  server.registerTool(
+    "publish_collection",
+    {
+      description: "Publish a collection to sales channels",
+      inputSchema: {
+        id: z.string().describe("Collection ID (e.g., 'gid://shopify/Collection/123456789')"),
+        publicationIds: z.array(z.string()).min(1).describe("Array of publication IDs to publish to"),
+        publishDate: z.string().optional().describe("Optional publish date (ISO 8601 format) for scheduled publishing"),
+      },
+    },
+    async ({ id, publicationIds, publishDate }) => {
+      const mutation = `
+        mutation PublishablePublish($id: ID!, $input: [PublicationInput!]!) {
+          publishablePublish(id: $id, input: $input) {
+            publishable {
+              ... on Collection {
+                id
+                title
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      const input = publicationIds.map((publicationId) => ({
+        publicationId,
+        ...(publishDate && { publishDate }),
+      }));
+
+      try {
+        const result = await client.execute(mutation, { id, input });
+        
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
+
+  // Unpublish Collection from Sales Channels
+  server.registerTool(
+    "unpublish_collection",
+    {
+      description: "Unpublish a collection from sales channels",
+      inputSchema: {
+        id: z.string().describe("Collection ID (e.g., 'gid://shopify/Collection/123456789')"),
+        publicationIds: z.array(z.string()).min(1).describe("Array of publication IDs to unpublish from"),
+      },
+    },
+    async ({ id, publicationIds }) => {
+      const mutation = `
+        mutation PublishableUnpublish($id: ID!, $input: [PublicationInput!]!) {
+          publishableUnpublish(id: $id, input: $input) {
+            publishable {
+              ... on Collection {
+                id
+                title
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      const input = publicationIds.map((publicationId) => ({
+        publicationId,
+      }));
+
+      try {
+        const result = await client.execute(mutation, { id, input });
+        
+        if (result.errors) {
+          return {
+            content: [{ type: "text", text: `GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}` }],
+          };
+        }
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.data, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+        };
+      }
+    }
+  );
 }

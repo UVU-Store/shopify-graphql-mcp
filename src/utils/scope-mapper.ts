@@ -29,6 +29,8 @@ export const toolDefinitions: ToolDefinition[] = [
   { name: "create_collection", description: "Create a new collection", scope: "write_products", category: "collections" },
   { name: "update_collection", description: "Update an existing collection", scope: "write_products", category: "collections" },
   { name: "delete_collection", description: "Delete a collection", scope: "write_products", category: "collections" },
+  { name: "publish_collection", description: "Publish a collection to sales channels", scope: "write_products", category: "collections" },
+  { name: "unpublish_collection", description: "Unpublish a collection from sales channels", scope: "write_products", category: "collections" },
   
   // Inventory
   { name: "get_inventory", description: "Fetch inventory levels for products", scope: "read_inventory", category: "inventory" },
