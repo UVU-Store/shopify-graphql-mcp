@@ -203,6 +203,12 @@ export function registerProductTools(server: McpServer, client: ShopifyGraphQLCl
         productType: z.string().optional().describe("Product type/category"),
         tags: z.array(z.string()).optional().describe("Product tags"),
         status: z.enum(["ACTIVE", "ARCHIVED", "DRAFT"]).optional().describe("Product status"),
+        metafields: z.array(z.object({
+          namespace: z.string().describe("Metafield namespace"),
+          key: z.string().describe("Metafield key"),
+          value: z.string().describe("Metafield value"),
+          type: z.string().optional().describe("Metafield type (e.g., 'single_line_text_field', 'number_integer', 'boolean')"),
+        })).optional().describe("Product metafields"),
         variants: z.array(z.object({
           title: z.string().describe("Variant title (e.g., 'Small / Blue')"),
           price: z.string().describe("Variant price"),
@@ -213,10 +219,16 @@ export function registerProductTools(server: McpServer, client: ShopifyGraphQLCl
             name: z.string().describe("Option value name (e.g., 'Small', 'Blue')"),
             optionName: z.string().describe("Option name (e.g., 'Size', 'Color')"),
           })).optional().describe("Option values for this variant"),
+          metafields: z.array(z.object({
+            namespace: z.string().describe("Metafield namespace"),
+            key: z.string().describe("Metafield key"),
+            value: z.string().describe("Metafield value"),
+            type: z.string().optional().describe("Metafield type"),
+          })).optional().describe("Variant metafields"),
         })).optional().describe("Product variants (created via bulk API)"),
       },
     },
-    async ({ title, descriptionHtml, vendor, productType, tags, status = "DRAFT", variants }) => {
+    async ({ title, descriptionHtml, vendor, productType, tags, status = "DRAFT", metafields, variants }) => {
       const createMutation = `
         mutation ProductCreate($input: ProductCreateInput!) {
           productCreate(product: $input) {
@@ -246,6 +258,14 @@ export function registerProductTools(server: McpServer, client: ShopifyGraphQLCl
       if (productType) input.productType = productType;
       if (tags) input.tags = tags;
       if (status) input.status = status;
+      if (metafields && metafields.length > 0) {
+        input.metafields = metafields.map(m => ({
+          namespace: m.namespace,
+          key: m.key,
+          value: m.value,
+          ...(m.type && { type: m.type }),
+        }));
+      }
 
       try {
         const createResult = await client.execute(createMutation, { input });
@@ -316,6 +336,12 @@ export function registerProductTools(server: McpServer, client: ShopifyGraphQLCl
           ...(v.optionValues && { optionValues: v.optionValues.map(ov => ({
             name: ov.name,
             optionName: ov.optionName,
+          })) }),
+          ...(v.metafields && v.metafields.length > 0 && { metafields: v.metafields.map(m => ({
+            namespace: m.namespace,
+            key: m.key,
+            value: m.value,
+            ...(m.type && { type: m.type }),
           })) }),
         }));
 
